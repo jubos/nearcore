@@ -24,6 +24,10 @@ pub struct ViewClientActor {
     runtime_adapter: Arc<RuntimeAdapter>,
 }
 
+/// XXX: WARNING! It is a pure hack! This is just to move forward with the async/await
+/// experiment. It is NOT safe to assume `ViewClientActor` to be `Send`!
+unsafe impl Send for ViewClientActor {}
+
 impl ViewClientActor {
     pub fn new(
         store: Arc<Store>,

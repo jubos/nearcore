@@ -58,6 +58,10 @@ pub struct ClientActor {
     num_tx_processed: u64,
 }
 
+/// XXX: WARNING! It is a pure hack! This is just to move forward with the async/await
+/// experiment. It is NOT safe to assume `ClientActor` to be `Send`!
+unsafe impl Send for ClientActor {}
+
 impl ClientActor {
     pub fn new(
         config: ClientConfig,
