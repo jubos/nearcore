@@ -3,6 +3,8 @@ use std::io;
 
 use chrono::{DateTime, Utc};
 use failure::{Backtrace, Context, Fail};
+use near_primitives::sharding::ChunkHash;
+use near_primitives::types::ShardId;
 
 #[derive(Debug)]
 pub struct Error {
@@ -17,6 +19,9 @@ pub enum ErrorKind {
     /// Orphan block.
     #[fail(display = "Orphan")]
     Orphan,
+    /// Chunks missing.
+    #[fail(display = "Chunks Missing: {:?}", _0)]
+    ChunksMissing(Vec<(ShardId, ChunkHash)>),
     /// Peer abusively sending us an old block we already have
     #[fail(display = "Old Block")]
     OldBlock,
@@ -41,6 +46,9 @@ pub enum ErrorKind {
     /// Invalid state root hash.
     #[fail(display = "Invalid State Root Hash")]
     InvalidStateRoot,
+    /// Incorrect number of chunk headers
+    #[fail(display = "Incorrect Number of Chunk Headers")]
+    IncorrectNumberOfChunkHeaders,
     /// IO Error.
     #[fail(display = "IO Error: {}", _0)]
     IOErr(String),
@@ -84,6 +92,7 @@ impl Error {
         match self.kind() {
             ErrorKind::Unfit(_)
             | ErrorKind::Orphan
+            | ErrorKind::ChunksMissing(_)
             | ErrorKind::IOErr(_)
             | ErrorKind::Other(_)
             | ErrorKind::DBNotFoundErr(_) => false,
@@ -94,7 +103,8 @@ impl Error {
             | ErrorKind::InvalidBlockProposer
             | ErrorKind::InvalidBlockConfirmation
             | ErrorKind::InvalidBlockWeight
-            | ErrorKind::InvalidStateRoot => true,
+            | ErrorKind::InvalidStateRoot
+            | ErrorKind::IncorrectNumberOfChunkHeaders => true,
         }
     }
 

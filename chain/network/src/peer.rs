@@ -125,6 +125,11 @@ impl Peer {
             PeerMessage::BlockHeaders(headers) => {
                 NetworkClientMessages::BlockHeaders(headers, peer_id)
             }
+            PeerMessage::ChunkPartRequest(request) => {
+                NetworkClientMessages::ChunkPartRequest(request, peer_id)
+            }
+            PeerMessage::ChunkPart(part) => NetworkClientMessages::ChunkPart(part),
+            PeerMessage::ChunkOnePart(one_part) => NetworkClientMessages::ChunkOnePart(one_part),
             _ => unreachable!(),
         };
         self.client_addr

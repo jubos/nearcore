@@ -350,6 +350,28 @@ impl Handler<NetworkRequests> for PeerManagerActor {
                 self.ban_peer(&peer_id, ban_reason);
                 NetworkResponses::NoResponse
             }
+            NetworkRequests::ChunkPartRequest { account_id, part_request } => {
+                self.send_message_to_account(
+                    ctx,
+                    account_id,
+                    SendMessage { message: PeerMessage::ChunkPartRequest(part_request) },
+                );
+                NetworkResponses::NoResponse
+            }
+            NetworkRequests::ChunkPart { peer_id, part } => {
+                if let Some((addr, _full_info)) = self.active_peers.get(&peer_id) {
+                    addr.do_send(SendMessage { message: PeerMessage::ChunkPart(part) });
+                }
+                NetworkResponses::NoResponse
+            }
+            NetworkRequests::ChunkOnePart { account_id, header_and_part } => {
+                self.send_message_to_account(
+                    ctx,
+                    account_id,
+                    SendMessage { message: PeerMessage::ChunkOnePart(header_and_part) },
+                );
+                NetworkResponses::NoResponse
+            }
         }
     }
 }

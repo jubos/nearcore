@@ -29,7 +29,9 @@ pub const COL_RECEIPTS: Option<u32> = Some(7);
 pub const COL_PEERS: Option<u32> = Some(8);
 pub const COL_PROPOSALS: Option<u32> = Some(9);
 pub const COL_VALIDATORS: Option<u32> = Some(10);
-const NUM_COLS: u32 = 11;
+pub const COL_CHUNKS: Option<u32> = Some(11);
+pub const COL_CHUNK_ONE_PARTS: Option<u32> = Some(12);
+const NUM_COLS: u32 = 13;
 
 pub struct Store {
     storage: Arc<dyn KeyValueDB>,
