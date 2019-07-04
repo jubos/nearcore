@@ -49,6 +49,9 @@ pub enum ErrorKind {
     /// Incorrect number of chunk headers
     #[fail(display = "Incorrect Number of Chunk Headers")]
     IncorrectNumberOfChunkHeaders,
+    /// One of the chunks is invalid
+    #[fail(display = "Incorrect Chunk")]
+    InvalidChunk,
     /// IO Error.
     #[fail(display = "IO Error: {}", _0)]
     IOErr(String),
@@ -103,6 +106,7 @@ impl Error {
             | ErrorKind::InvalidBlockProposer
             | ErrorKind::InvalidBlockConfirmation
             | ErrorKind::InvalidBlockWeight
+            | ErrorKind::InvalidChunk
             | ErrorKind::InvalidStateRoot
             | ErrorKind::IncorrectNumberOfChunkHeaders => true,
         }
