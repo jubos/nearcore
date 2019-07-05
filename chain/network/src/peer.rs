@@ -195,7 +195,6 @@ impl Peer {
                 Ok(NetworkClientResponses::ChainInfo { genesis, height, total_weight }) => {
                     let handshake = Handshake::new(
                         act.node_info.id,
-                        act.node_info.account_id.clone(),
                         act.node_info.addr_port(),
                         PeerChainInfo { genesis, height, total_weight },
                     );
@@ -362,7 +361,7 @@ impl StreamHandler<Vec<u8>, io::Error> for Peer {
                     addr: handshake
                         .listen_port
                         .map(|port| SocketAddr::new(self.peer_addr.ip(), port)),
-                    account_id: handshake.account_id.clone(),
+                    account_id: None,
                 };
                 self.chain_info = handshake.chain_info;
                 self.peer_manager_addr

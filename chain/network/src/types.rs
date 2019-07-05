@@ -208,8 +208,6 @@ pub struct Handshake {
     pub version: u32,
     /// Sender's peer id.
     pub peer_id: PeerId,
-    /// Sender's account id, if present.
-    pub account_id: Option<AccountId>,
     /// Sender's listening addr.
     pub listen_port: Option<u16>,
     /// Peer's chain information.
@@ -219,11 +217,10 @@ pub struct Handshake {
 impl Handshake {
     pub fn new(
         peer_id: PeerId,
-        account_id: Option<AccountId>,
         listen_port: Option<u16>,
         chain_info: PeerChainInfo,
     ) -> Self {
-        Handshake { version: PROTOCOL_VERSION, peer_id, account_id, listen_port, chain_info }
+        Handshake { version: PROTOCOL_VERSION, peer_id, listen_port, chain_info }
     }
 }
 
@@ -231,14 +228,12 @@ impl TryFrom<network_proto::Handshake> for Handshake {
     type Error = Box<dyn std::error::Error>;
 
     fn try_from(proto: network_proto::Handshake) -> Result<Self, Self::Error> {
-        let account_id = proto.account_id.into_option().map(|s| s.value);
         let listen_port = proto.listen_port.into_option().map(|v| v.value as u16);
         let peer_id: PublicKey = proto.peer_id.try_into().map_err(|e| format!("{}", e))?;
         let chain_info = proto_to_type(proto.chain_info)?;
         Ok(Handshake {
             version: proto.version,
             peer_id: peer_id.into(),
-            account_id,
             listen_port,
             chain_info,
         })
@@ -247,7 +242,6 @@ impl TryFrom<network_proto::Handshake> for Handshake {
 
 impl From<Handshake> for network_proto::Handshake {
     fn from(handshake: Handshake) -> network_proto::Handshake {
-        let account_id = SingularPtrField::from_option(handshake.account_id.map(to_string_value));
         let listen_port = SingularPtrField::from_option(handshake.listen_port.map(|v| {
             let mut res = UInt32Value::new();
             res.set_value(u32::from(v));
@@ -256,7 +250,6 @@ impl From<Handshake> for network_proto::Handshake {
         network_proto::Handshake {
             version: handshake.version,
             peer_id: handshake.peer_id.into(),
-            account_id,
             listen_port,
             chain_info: SingularPtrField::some(handshake.chain_info.into()),
             ..Default::default()
@@ -649,6 +642,11 @@ pub enum NetworkRequests {
     BanPeer {
         peer_id: PeerId,
         ban_reason: ReasonForBan,
+    },
+    /// Announce new account
+    AnnounceAccount {
+        peer_id: PeerId,
+        account_id: AccountId,
     },
 }
 

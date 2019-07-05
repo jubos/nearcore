@@ -37,7 +37,7 @@ use crate::types::{
 /// How often to request peers from active peers.
 const REQUEST_PEERS_SECS: i64 = 60;
 
-macro_rules! unwrap_or_error(($obj: expr, $error: expr) => (match $obj {
+macro_rules! unwrap_or_error (($obj: expr, $error: expr) => (match $obj {
     Ok(result) => result,
     Err(err) => {
         error!(target: "network", "{}: {}", $error, err);
@@ -109,9 +109,13 @@ impl PeerManagerActor {
             self.peer_store.peer_connected(&full_peer_info),
             "Failed to save peer data"
         );
+
+        // TODO: Remove this. In this situation account_id is always None.
+        // AccountId will be given on announce_account
         if let Some(account_id) = &full_peer_info.peer_info.account_id {
             self.account_peers.insert(account_id.clone(), full_peer_info.peer_info.id);
         }
+
         self.active_peers.insert(
             full_peer_info.peer_info.id,
             ActivePeer {
@@ -191,10 +195,10 @@ impl PeerManagerActor {
             .values()
             .map(|active_peer| active_peer.full_peer_info.chain_info.total_weight)
             .max()
-        {
-            Some(w) => w,
-            None => return vec![],
-        };
+            {
+                Some(w) => w,
+                None => return vec![],
+            };
         self.active_peers
             .values()
             .filter_map(|active_peer| {
@@ -447,6 +451,11 @@ impl Handler<NetworkRequests> for PeerManagerActor {
                     // TODO: send stop signal to the addr.
                 }
                 self.ban_peer(&peer_id, ban_reason);
+                NetworkResponses::NoResponse
+            }
+            NetworkRequests::AnnounceAccount { peer_id, account_id } => {
+                // TODO: Check signature from peer
+                self.account_peers.insert(account_id, peer_id);
                 NetworkResponses::NoResponse
             }
         }
