@@ -256,7 +256,7 @@ impl Peer {
             },
             PeerMessage::StateResponse(shard_id, hash, payload, receipts) => {
                 NetworkClientMessages::StateResponse(shard_id, hash, payload, receipts)
-            }
+            },
             _ => unreachable!(),
         };
         self.client_addr

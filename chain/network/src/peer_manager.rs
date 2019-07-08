@@ -25,14 +25,11 @@ use near_store::Store;
 use crate::codec::Codec;
 use crate::peer::Peer;
 use crate::peer_store::PeerStore;
-use crate::types::{
-    Ban, Consolidate, FullPeerInfo, InboundTcpConnect, KnownPeerStatus, OutboundTcpConnect, PeerId,
-    PeerList, PeerMessage, PeerType, PeersRequest, PeersResponse, QueryPeerStats, ReasonForBan,
-    SendMessage, Unregister,
-};
+use crate::types::{Ban, Consolidate, FullPeerInfo, InboundTcpConnect, KnownPeerStatus, OutboundTcpConnect, PeerId, PeerList, PeerMessage, PeerType, PeersRequest, PeersResponse, QueryPeerStats, ReasonForBan, SendMessage, Unregister, AnnounceAccountResult};
 use crate::types::{
     NetworkClientMessages, NetworkConfig, NetworkRequests, NetworkResponses, PeerInfo,
 };
+use near_primitives::crypto::signature::{Signature, verify};
 
 /// How often to request peers from active peers.
 const REQUEST_PEERS_SECS: i64 = 60;
@@ -361,6 +358,23 @@ impl PeerManagerActor {
             warn!(target: "network", "Unknown account {} in peers, not supported indirect routing", account_id);
         }
     }
+
+    fn process_announce_account(&mut self, peer_id: PeerId, account_id: AccountId, signature: Signature) -> AnnounceAccountResult {
+        if self.account_peers.contains_key(&account_id) {
+            // This announcement was already received.
+            return AnnounceAccountResult::IgnoreAnnounce;
+        }
+
+        // Verify the signature.
+        if !verify(account_id.as_bytes(), &signature, &peer_id.pub_key()) {
+            return AnnounceAccountResult::InvalidSignature;
+        }
+
+        // TODO: Establish direct connection with peer if not in `self.active_peers`
+        self.account_peers.insert(account_id, peer_id);
+
+        return AnnounceAccountResult::BroadcastAccount;
+    }
 }
 
 impl Actor for PeerManagerActor {
@@ -453,9 +467,13 @@ impl Handler<NetworkRequests> for PeerManagerActor {
                 self.ban_peer(&peer_id, ban_reason);
                 NetworkResponses::NoResponse
             }
-            NetworkRequests::AnnounceAccount { peer_id, account_id } => {
-                // TODO: Check signature from peer
-                self.account_peers.insert(account_id, peer_id);
+            NetworkRequests::AnnounceAccount { peer_id, account_id, signature } => {
+                // TODO: When the signature don't match ban announcement sender
+
+                if let AnnounceAccountResult::BroadcastAccount = self.process_announce_account(peer_id, account_id, signature) {
+                    // TODO: Broadcast message
+                }
+
                 NetworkResponses::NoResponse
             }
         }

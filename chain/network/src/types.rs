@@ -33,6 +33,12 @@ pub const PROTOCOL_VERSION: u32 = 1;
 #[derive(Copy, Clone, Eq, PartialOrd, Ord, PartialEq, Serialize, Deserialize)]
 pub struct PeerId(PublicKey);
 
+impl PeerId {
+    pub fn pub_key(&self) -> PublicKey {
+        self.0
+    }
+}
+
 impl From<PeerId> for Vec<u8> {
     fn from(peer_id: PeerId) -> Vec<u8> {
         (&peer_id.0).into()
@@ -647,6 +653,7 @@ pub enum NetworkRequests {
     AnnounceAccount {
         peer_id: PeerId,
         account_id: AccountId,
+        signature: Signature,
     },
 }
 
@@ -775,4 +782,14 @@ where
 
 impl Message for QueryPeerStats {
     type Result = PeerStatsResult;
+}
+
+/// Result after processing account id announcement
+pub enum AnnounceAccountResult {
+    /// Announcement received for first time.
+    BroadcastAccount,
+    /// Announcement received again so can be safely ignored.
+    IgnoreAnnounce,
+    /// Invalid signature on announcement.
+    InvalidSignature,
 }
